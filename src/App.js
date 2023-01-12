@@ -1,20 +1,10 @@
-import React, { useRef, useState } from 'react';
-import UserList from './UserList';
-import CreateUser from './CreateUser';
+import React, { useRef, useState, useMemo } from 'react';
+import CreateUser from "./CreateUser";
+import UserList from "./UserList";
+
 
 function App() {
-    const [inputs, setInputs] = useState({
-        username: '',
-        email: ''
-    });
-    const { username, email } = inputs;
-    const onChange = e => {
-        const { name, value } = e.target;
-        setInputs({
-            ...inputs,
-            [name]: value
-        });
-    };
+    const [style,setStyle] = useState();
     const [users, setUsers] = useState([
         {
             id: 1,
@@ -32,28 +22,52 @@ function App() {
             email: 'liz@example.com'
         }
     ]);
+    const [inputs, setInputs] = useState({
+        username: '',
+        email: ''
+    });
+    const { username, email } = inputs;
 
+    function countActiveUsers(users) {
+        console.log('활성 사용자 수를 세는중...');
+        return users.filter(user => user.active).length;
+    }
+    // const count = countActiveUsers(users);
+    const count = useMemo(() => countActiveUsers(users), [users]);
+    const onChange = (e)=>{
+        let {name,value} = e.target
+        console.log('name,value',name,value);
+        setInputs({
+            ...inputs,
+            [name]: value
+        });
+    }
     const nextId = useRef(4);
-    const onCreate = () => {
+    const onCreate = (e)=>{
         const user = {
             id: nextId.current,
             username,
             email
         };
-        setUsers(users.concat(user));
-
+        setUsers([...users,user]);
         setInputs({
             username: '',
             email: ''
         });
         nextId.current += 1;
-    };
-
-    const onRemove = id => {
-        // user.id 가 파라미터로 일치하지 않는 원소만 추출해서 새로운 배열을 만듬
-        // = user.id 가 id 인 것을 제거함
-        setUsers(users.filter(user => user.id !== id));
-    };
+    }
+    const onRemove = (removeData)=> {
+        console.log('삭제',removeData);
+        setUsers(users.filter(user => user.id !== removeData));
+    }
+    const onToggle = (id) => {
+        console.log('토글 색을바꾸시오');
+        setUsers(
+            users.map(user =>
+                user.id === id ? { ...user, active: !user.active } : user
+            )
+        );
+    }
 
     return (
         <>
@@ -63,9 +77,11 @@ function App() {
                 onChange={onChange}
                 onCreate={onCreate}
             />
-            <UserList users={users} onRemove={onRemove} />
+            <UserList users={users} onRemove={onRemove} onToggle={onToggle}/>
+            <div>활성사용자 수 : {count}</div>
         </>
-    );
+
+    )
 }
 
 export default App;
